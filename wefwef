@@ -1,0 +1,76 @@
+# Введение в обработку ошибок в PostgreSQL
+
+Обработка ошибок является важной частью разработки приложений, включая работу с базами данных. В PostgreSQL для обработки ошибок используется конструкция `RAISE` или `RAISE EXCEPTION`.
+
+## RAISE EXCEPTION
+
+`RAISE EXCEPTION` позволяет создавать и вызывать пользовательские исключения. Это может быть полезно для обработки определенных ситуаций или ошибок в коде.
+
+Синтаксис:
+```sql
+RAISE EXCEPTION 'message' [USING option = value];
+```
+
+- `message`: Текстовое сообщение, которое будет выведено при возникновении исключения.
+- `option`: Опциональный параметр, который можно использовать для указания дополнительных данных об исключении.
+
+### Пример 1: Создание и вызов пользовательского исключения
+
+```sql
+-- Создание пользовательского исключения
+CREATE OR REPLACE FUNCTION divide(a numeric, b numeric) RETURNS numeric AS $$
+BEGIN
+    IF b = 0 THEN
+        RAISE EXCEPTION 'Division by zero is not allowed';
+    ELSE
+        RETURN a / b;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Вызов функции с возникновением исключения
+SELECT divide(10, 0);
+```
+
+В этом примере создана функцию `divide`, которая делит два числа. Если делитель равен нулю, она вызывает пользовательское исключение с сообщением "Division by zero is not allowed".
+
+### Пример 2: Использование опциональных параметров
+
+```sql
+CREATE OR REPLACE FUNCTION custom_exception() RETURNS void AS $$
+BEGIN
+    RAISE EXCEPTION 'This is a custom exception' USING hint = 'This is a hint';
+END;
+$$ LANGUAGE plpgsql;
+
+-- Вызов функции с опциональным параметром
+SELECT custom_exception();
+```
+
+В этом примере создана функция `custom_exception`, которая вызывает пользовательское исключение с опциональным параметром "hint".
+
+## Обработка исключений
+
+Чтобы обработать исключение, можно использовать блок `BEGIN...EXCEPTION...END`. Вы можете указать, какие исключения вы хотите обработать, и какой код должен выполняться в случае исключения.
+
+Синтаксис:
+```sql
+BEGIN
+    -- Код, который может вызвать исключение
+EXCEPTION
+    WHEN exception_type THEN
+        -- Код для обработки исключения
+END;
+```
+
+### Пример 3: Обработка пользовательского исключения
+
+```sql
+BEGIN
+    -- Попытка выполнить деление на ноль
+    SELECT divide(10, 0);
+EXCEPTION
+    WHEN others THEN
+        -- Обработка исключения
+        RAISE NOTICE 'An exception occurred: %', SQLERRM;
+END;
